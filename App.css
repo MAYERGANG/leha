@@ -645,3 +645,35 @@ body {
     height: 90vw;
   }
 }
+
+@media (max-width: 640px) {
+  .bg-halo,
+  .bg-fog,
+  .bg-aurora-flow,
+  .bg-leaks,
+  .bg-stars,
+  .bg-mesh,
+  .bg-sheen,
+  .bg-frost,
+  .bg-datarain,
+  .bg-particles,
+  .scanlines,
+  .bg-circuit {
+    display: none;
+  }
+
+  .bg-orb {
+    filter: blur(20px) saturate(1.05);
+    opacity: 0.45;
+  }
+
+  .cyber-panel,
+  .message-bubble {
+    backdrop-filter: none;
+  }
+
+  .chip,
+  .tab {
+    backdrop-filter: none;
+  }
+}
