@@ -191,7 +191,7 @@ const App: React.FC = () => {
                 </button>
               )}
               {analysis && (
-                <div className="w-full p-4 border border-green-500 bg-green-900/10 animate-in fade-in zoom-in rounded-lg">
+                <div className="w-full p-4 border border-green-500 bg-green-900/10 reveal rounded-lg">
                   <pre className="whitespace-pre-wrap text-sm">{analysis}</pre>
                   <button onClick={() => setPreviewImage(null)} className="mt-4 text-[10px] underline">СБРОСИТЬ УЛИКИ</button>
                 </div>
