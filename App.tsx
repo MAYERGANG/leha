@@ -329,6 +329,7 @@ const App: React.FC = () => {
       <div className="bg-orb bg-orb-a" />
       <div className="bg-orb bg-orb-b" />
       <div className="bg-orb bg-orb-c" />
+      <div className="bg-mesh" />
       <div className="bg-noise" />
       <div className="bg-grid" />
       <div className="scanlines" />
