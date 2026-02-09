@@ -110,6 +110,22 @@ body {
   mask-image: radial-gradient(circle at 50% 20%, black 10%, transparent 65%);
 }
 
+.scanlines {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.0) 0px,
+    rgba(0, 0, 0, 0.0) 2px,
+    rgba(0, 0, 0, 0.08) 3px
+  );
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: -1;
+  animation: scanFlicker 6s steps(30) infinite;
+}
+
 .cyber-panel {
   border: 1px solid rgba(0, 255, 154, 0.35);
   background: linear-gradient(180deg, rgba(5, 5, 5, 0.92), rgba(0, 0, 0, 0.6));
@@ -197,8 +213,48 @@ body {
   z-index: -1;
 }
 
+.bloom-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(120deg, rgba(0, 255, 154, 0.08), transparent 40%, rgba(0, 255, 213, 0.08));
+  opacity: 0.18;
+  pointer-events: none;
+}
+
 .glow-text {
   text-shadow: 0 0 12px rgba(0, 255, 154, 0.6), 0 0 22px rgba(0, 255, 213, 0.35);
+}
+
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  clip-path: inset(0 0 0 0);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.glitch::before {
+  color: rgba(0, 255, 213, 0.9);
+  transform: translate(-1px, 0);
+  animation: glitchA 2.6s infinite linear;
+}
+
+.glitch::after {
+  color: rgba(182, 255, 75, 0.9);
+  transform: translate(1px, 0);
+  animation: glitchB 3.1s infinite linear;
 }
 
 ::selection {
@@ -238,6 +294,38 @@ body {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+@keyframes scanFlicker {
+  0%, 100% { opacity: 0.28; }
+  50% { opacity: 0.38; }
+}
+
+@keyframes glitchA {
+  0% { clip-path: inset(0 0 85% 0); transform: translate(-1px, -1px); }
+  10% { clip-path: inset(0 0 80% 0); transform: translate(1px, 1px); }
+  20% { clip-path: inset(10% 0 60% 0); transform: translate(-1px, 0); }
+  30% { clip-path: inset(40% 0 40% 0); transform: translate(2px, -1px); }
+  40% { clip-path: inset(0 0 75% 0); transform: translate(-2px, 1px); }
+  50% { clip-path: inset(50% 0 10% 0); transform: translate(1px, 0); }
+  60% { clip-path: inset(20% 0 60% 0); transform: translate(-1px, 1px); }
+  70% { clip-path: inset(0 0 70% 0); transform: translate(1px, -1px); }
+  80% { clip-path: inset(60% 0 20% 0); transform: translate(-2px, 0); }
+  90% { clip-path: inset(10% 0 50% 0); transform: translate(2px, 1px); }
+  100% { clip-path: inset(0 0 85% 0); transform: translate(-1px, 0); }
+}
+
+@keyframes glitchB {
+  0% { clip-path: inset(80% 0 0 0); transform: translate(1px, 0); }
+  15% { clip-path: inset(60% 0 10% 0); transform: translate(-1px, 1px); }
+  25% { clip-path: inset(30% 0 40% 0); transform: translate(2px, -1px); }
+  35% { clip-path: inset(0 0 70% 0); transform: translate(-2px, 1px); }
+  45% { clip-path: inset(50% 0 20% 0); transform: translate(1px, -1px); }
+  55% { clip-path: inset(0 0 60% 0); transform: translate(-1px, 0); }
+  65% { clip-path: inset(70% 0 0 0); transform: translate(2px, 1px); }
+  75% { clip-path: inset(20% 0 50% 0); transform: translate(-2px, -1px); }
+  85% { clip-path: inset(0 0 80% 0); transform: translate(1px, 0); }
+  100% { clip-path: inset(80% 0 0 0); transform: translate(-1px, 1px); }
 }
 
 @keyframes driftA {

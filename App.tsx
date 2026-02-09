@@ -304,6 +304,7 @@ const App: React.FC = () => {
       <div className="bg-orb bg-orb-c" />
       <div className="bg-noise" />
       <div className="bg-grid" />
+      <div className="scanlines" />
       {/* Terminal Header */}
       <header className="mb-6 cyber-panel rounded-xl p-4 md:p-5 flex flex-col md:flex-row justify-between items-center gap-4 backdrop-blur bloom-panel">
         <div className="flex items-center gap-4">
@@ -311,7 +312,9 @@ const App: React.FC = () => {
             <ExclamationTriangleIcon className="w-8 h-8 text-green-500" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight neon-text uppercase glow-text">LEKHA-TERMINAL <span className="text-white">v2.0</span></h1>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight neon-text uppercase glow-text">
+              <span className="glitch" data-text="LEKHA-TERMINAL">LEKHA-TERMINAL</span> <span className="text-white">v2.0</span>
+            </h1>
             <p className="text-[10px] text-green-500/60 font-bold uppercase tracking-[0.25em]">System status: ROASTING_MODE_ENABLED</p>
           </div>
         </div>
