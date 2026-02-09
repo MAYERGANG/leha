@@ -336,6 +336,7 @@ const App: React.FC = () => {
       <div className="bg-stars" />
       <div className="bg-mesh" />
       <div className="bg-sheen" />
+      <div className="bg-frost" />
       <div className="bg-noise" />
       <div className="bg-grid" />
       <div className="scanlines" />
