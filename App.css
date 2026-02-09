@@ -23,6 +23,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.display-font {
+  font-family: 'Unbounded', 'Space Grotesk', sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
 .app-shell {
   position: relative;
   z-index: 0;
@@ -150,6 +159,17 @@ body {
   box-shadow:
     0 0 24px rgba(0, 255, 154, 0.18),
     inset 0 0 30px rgba(0, 255, 154, 0.08);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.cyber-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(80% 120% at 10% 0%, rgba(0, 255, 154, 0.08), transparent 55%);
+  pointer-events: none;
 }
 
 .chip {
@@ -243,6 +263,68 @@ body {
 
 .glow-text {
   text-shadow: 0 0 12px rgba(0, 255, 154, 0.6), 0 0 22px rgba(0, 255, 213, 0.35);
+}
+
+.message-bubble {
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.35),
+    inset 0 0 20px rgba(0, 255, 154, 0.08);
+}
+
+.terminal-input {
+  transition: box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.terminal-input:focus {
+  box-shadow: 0 0 0 1px rgba(0, 255, 154, 0.35), 0 0 18px rgba(0, 255, 154, 0.2);
+}
+
+.btn-primary,
+.btn-danger {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 0 18px rgba(0, 255, 154, 0.2);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.btn-primary:hover,
+.btn-danger:hover {
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 0 18px rgba(255, 80, 80, 0.25);
+}
+
+.quote-card {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), inset 0 0 28px rgba(0, 255, 154, 0.08);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 154, 0.3);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 154, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-orb,
+  .bg-mesh,
+  .scanlines,
+  .panel-enter,
+  .reveal {
+    animation: none !important;
+  }
 }
 
 .glitch {

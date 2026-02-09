@@ -340,10 +340,10 @@ const App: React.FC = () => {
             <ExclamationTriangleIcon className="w-8 h-8 text-green-500" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight neon-text uppercase glow-text">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight neon-text uppercase glow-text display-font">
               <span className="glitch" data-text="LEKHA-TERMINAL">LEKHA-TERMINAL</span> <span className="text-white">v2.0</span>
             </h1>
-            <p className="text-[10px] text-green-500/60 font-bold uppercase tracking-[0.25em]">System status: ROASTING_MODE_ENABLED</p>
+            <p className="text-[10px] text-green-500/60 font-bold uppercase tracking-[0.25em] mono">System status: ROASTING_MODE_ENABLED</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -394,7 +394,7 @@ const App: React.FC = () => {
           {activeFeature === LekhaFeature.CHAT && (
             <div className="panel-enter flex flex-col h-full">
               <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 font-bold text-[13px] sm:text-sm">
-                <div className="flex items-center justify-between text-green-900/50 text-[10px] uppercase mb-4 tracking-[0.35em]">
+                <div className="flex items-center justify-between text-green-900/50 text-[10px] uppercase mb-4 tracking-[0.35em] mono">
                   <span>--- Начало лога ---</span>
                   {messages.length > 0 && (
                     <button
@@ -418,14 +418,14 @@ const App: React.FC = () => {
                 )}
                 {messages.map((m) => (
                   <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] p-3 md:p-4 border rounded-lg ${m.role === 'user' ? 'border-green-500 text-green-500 bg-black/50' : 'border-white/60 text-white bg-green-900/10'}`}>
-                      <div className="flex items-center justify-between gap-3 text-[10px] opacity-60 mb-1">
+                    <div className={`message-bubble max-w-[85%] p-3 md:p-4 border rounded-lg ${m.role === 'user' ? 'border-green-500 text-green-500 bg-black/50' : 'border-white/60 text-white bg-green-900/10'}`}>
+                      <div className="flex items-center justify-between gap-3 text-[10px] opacity-60 mb-1 mono">
                         <span className="uppercase">{m.role === 'user' ? 'ЛЕХА' : 'ТЕРМИНАЛ'}</span>
                         <span>{formatTime(m.ts)}</span>
                       </div>
                       <div>{m.text}</div>
                       {m.role === 'user' && (
-                        <div className="mt-2 text-[10px] uppercase tracking-[0.25em] opacity-50">
+                        <div className="mt-2 text-[10px] uppercase tracking-[0.25em] opacity-50 mono">
                           {m.status === 'sending' && 'ОТПРАВКА'}
                           {m.status === 'sent' && 'ДОСТАВЛЕНО'}
                           {m.status === 'failed' && 'СБОЙ'}
@@ -443,9 +443,9 @@ const App: React.FC = () => {
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={playClick}
                   placeholder="Введи оправдание..."
-                  className="flex-1 bg-black/80 border border-green-900/50 px-4 py-3 text-green-500 focus:outline-none focus:border-green-500 rounded-md min-h-[48px]"
+                  className="terminal-input flex-1 bg-black/80 border border-green-900/50 px-4 py-3 text-green-500 focus:outline-none focus:border-green-500 rounded-md min-h-[48px]"
                 />
-                <button className="bg-green-600 text-black px-4 py-3 hover:bg-green-400 rounded-md min-h-[48px]" aria-label="Отправить">
+                <button className="btn-primary bg-green-600 text-black px-4 py-3 hover:bg-green-400 rounded-md min-h-[48px]" aria-label="Отправить">
                   <PaperAirplaneIcon className="w-6 h-6" />
                 </button>
               </form>
@@ -455,7 +455,7 @@ const App: React.FC = () => {
           {/* Vision Roast */}
           {activeFeature === LekhaFeature.VISION && (
             <div className="panel-enter p-6 md:p-8 flex flex-col items-center gap-6 h-full overflow-y-auto">
-              <h2 className="text-xl md:text-2xl font-black uppercase text-center neon-text tracking-widest">Рентген «Чёткий Паца»</h2>
+              <h2 className="text-xl md:text-2xl font-black uppercase text-center neon-text tracking-widest display-font">Рентген «Чёткий Паца»</h2>
               <div className="w-full max-w-sm aspect-square border-2 border-dashed border-green-500/70 flex items-center justify-center relative overflow-hidden group rounded-xl bg-black/60">
                 {previewImage ? (
                   <img src={previewImage} className="w-full h-full object-cover" />
@@ -468,7 +468,7 @@ const App: React.FC = () => {
                 <input type="file" accept="image/*" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer" />
               </div>
               {previewImage && !analysis && (
-                <button onClick={startScan} disabled={loading} className="w-full max-w-sm bg-green-600 text-black p-4 font-black uppercase hover:bg-green-400 disabled:opacity-50 rounded-md min-h-[52px]">
+                <button onClick={startScan} disabled={loading} className="btn-primary w-full max-w-sm bg-green-600 text-black p-4 font-black uppercase hover:bg-green-400 disabled:opacity-50 rounded-md min-h-[52px]">
                   {loading ? 'ИЩЕМ ПРЫЩИ...' : 'ЗАПУСТИТЬ РОАСТ-СКАНЕР'}
                 </button>
               )}
@@ -484,7 +484,7 @@ const App: React.FC = () => {
           {/* Gallery Prank */}
           {activeFeature === LekhaFeature.GALLERY && (
             <div className="panel-enter p-6 md:p-8 flex flex-col gap-6 h-full overflow-y-auto">
-              <h2 className="text-xl md:text-2xl font-black uppercase text-center neon-text tracking-widest">Лёха в параллельных мирах</h2>
+              <h2 className="text-xl md:text-2xl font-black uppercase text-center neon-text tracking-widest display-font">Лёха в параллельных мирах</h2>
               <div className="flex-1 flex flex-col items-center justify-center gap-6">
                 <div className="w-full max-w-sm aspect-square border border-green-500/70 bg-black/70 flex items-center justify-center rounded-xl">
                   {genImg ? (
@@ -500,9 +500,9 @@ const App: React.FC = () => {
                   <input 
                     value={genPrompt}
                     onChange={e => setGenPrompt(e.target.value)}
-                    className="w-full bg-black/80 border border-green-500 p-3 text-sm text-green-500 rounded-md min-h-[48px]"
+                    className="terminal-input w-full bg-black/80 border border-green-500 p-3 text-sm text-green-500 rounded-md min-h-[48px]"
                   />
-                  <button onClick={generateLekha} disabled={loading} className="w-full bg-green-600 text-black p-3 font-bold uppercase hover:bg-green-400 disabled:opacity-50 rounded-md min-h-[52px]">
+                  <button onClick={generateLekha} disabled={loading} className="btn-primary w-full bg-green-600 text-black p-3 font-bold uppercase hover:bg-green-400 disabled:opacity-50 rounded-md min-h-[52px]">
                     ГЕНЕРИРОВАТЬ ПРИКОЛ
                   </button>
                 </div>
@@ -513,7 +513,7 @@ const App: React.FC = () => {
           {/* Wisdom/Roast Quotes */}
           {activeFeature === LekhaFeature.WISDOM && (
             <div className="panel-enter p-6 md:p-8 flex flex-col items-center justify-center h-full gap-8">
-              <div className="relative p-6 md:p-8 border-2 border-green-500 bg-green-900/5 max-w-md w-full rounded-xl">
+              <div className="relative p-6 md:p-8 border-2 border-green-500 bg-green-900/5 max-w-md w-full rounded-xl quote-card">
                 <div className="absolute -top-3 left-4 bg-black px-2 text-[10px] font-bold">ИСТИНА_О_ЛЕХЕ.TXT</div>
                 <p className="text-lg md:text-xl italic text-center font-bold leading-relaxed">
                   "{wisdom}"
@@ -522,7 +522,7 @@ const App: React.FC = () => {
               <button 
                 onClick={fetchWisdom} 
                 disabled={loading}
-                className="group relative px-8 py-4 bg-red-600 text-white font-black uppercase hover:bg-red-500 transition-all disabled:opacity-50 rounded-md min-h-[52px]"
+                className="btn-danger group relative px-8 py-4 bg-red-600 text-white font-black uppercase hover:bg-red-500 transition-all disabled:opacity-50 rounded-md min-h-[52px]"
               >
                 <div className="absolute inset-0 border border-white translate-x-1 translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform"></div>
                 КНОПКА СУДЬБЫ ДЛЯ ЛЁХИ
