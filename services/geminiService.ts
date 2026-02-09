@@ -36,6 +36,16 @@ function ensureApiKey() {
   }
 }
 
+const fallbackChats = [
+  "Ну привет, Лёха. Опять пришёл за мудростью?",
+  "Слышь, Лёх, ты сначала долг верни, потом вопросы.",
+  "Лёха, не спеши. Я ещё думаю, как тебя поддеть.",
+  "Опять ты? Ладно, давай, удиви меня.",
+  "Лёха, твои аргументы, как твой авто — на честном слове.",
+];
+
+const fallbackChat = () => fallbackChats[Math.floor(Math.random() * fallbackChats.length)];
+
 const SYSTEM_INSTRUCTION = `
 Ты - "Токсичный Лёха-Бот". Твоя задача - подкалывать (подъёбывать) пользователя, которого зовут Лёха.
 Твой стиль:
@@ -56,10 +66,9 @@ export const geminiService = {
         config: { systemInstruction: SYSTEM_INSTRUCTION },
       });
       const response = await withRetry(() => chat.sendMessage({ message }), 2, opts?.onRetry);
-      return response.text;
-    } catch (err) {
-      if (err instanceof GeminiError) throw err;
-      throw new GeminiError('NETWORK_OR_API', 'Network or API error');
+      return response.text || fallbackChat();
+    } catch {
+      return fallbackChat();
     }
   },
 

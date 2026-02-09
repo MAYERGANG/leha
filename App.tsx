@@ -91,13 +91,8 @@ const App: React.FC = () => {
         }
       });
       setMessages(prev => [...prev, { role: 'model', text: res }]);
-    } catch (err: any) {
-      const code = err?.code;
-      if (code === 'API_KEY_MISSING') {
-        setMessages(prev => [...prev, { role: 'model', text: "Ключа нет. Лёха, без ключа даже дверь не откроешь. Проверь VITE_GEMINI_API_KEY." }]);
-      } else {
-        setMessages(prev => [...prev, { role: 'model', text: "Сеть барахлит или API отвалилось. Попробуй ещё раз чуть позже." }]);
-      }
+    } catch {
+      setMessages(prev => [...prev, { role: 'model', text: "Лёха, сегодня я молчу. Но ты всё равно не прав." }]);
     } finally {
       setRetrying(false);
       setLoading(false);
