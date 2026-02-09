@@ -14,6 +14,9 @@ import {
 } from '@heroicons/react/24/solid';
 
 const App: React.FC = () => {
+  const STORAGE_KEY = 'lekha_terminal_messages_v1';
+  const SETTINGS_KEY = 'lekha_terminal_settings_v1';
+
   const [activeFeature, setActiveFeature] = useState<LekhaFeature>(LekhaFeature.CHAT);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -26,11 +29,23 @@ const App: React.FC = () => {
   const [retrying, setRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [soundOn, setSoundOn] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return true;
+      const parsed = JSON.parse(raw);
+      return parsed?.soundOn ?? true;
+    } catch {
+      return true;
+    }
+  });
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const targetRef = useRef({ x: 0, y: 0 });
   const currentRef = useRef({ x: 0, y: 0 });
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const makeId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
@@ -40,9 +55,78 @@ const App: React.FC = () => {
     setMessages(prev => prev.map(m => (m.id === id ? { ...m, ...patch } : m)));
   };
 
+  const playBeep = (freq = 740, duration = 0.06, gain = 0.04) => {
+    if (!soundOn || typeof window === 'undefined') return;
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioCtx();
+    }
+    const ctx = audioCtxRef.current;
+    if (ctx.state === 'suspended') ctx.resume();
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.type = 'square';
+    g.gain.value = gain;
+    osc.connect(g);
+    g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    osc.start(now);
+    osc.stop(now + duration);
+  };
+
+  const clearHistory = () => {
+    setMessages([]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  };
+
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const safe = parsed
+          .filter(m => m && typeof m.text === 'string' && typeof m.role === 'string')
+          .map(m => ({
+            id: String(m.id || makeId()),
+            role: m.role === 'user' ? 'user' : 'model',
+            text: m.text,
+            ts: typeof m.ts === 'number' ? m.ts : Date.now(),
+            status: m.status
+          }));
+        setMessages(safe.slice(-100));
+      }
+    } catch {
+      // ignore corrupted storage
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-100)));
+    } catch {
+      // ignore quota errors
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ soundOn }));
+    } catch {
+      // ignore quota errors
+    }
+  }, [soundOn]);
 
   useEffect(() => {
     const update = () => {
@@ -91,6 +175,7 @@ const App: React.FC = () => {
     setRetrying(false);
     setRetryCount(0);
     setCooldownUntil(Date.now() + 2000);
+    playBeep(820, 0.05, 0.03);
 
     try {
       const res = await geminiService.chat(input, {
@@ -101,9 +186,11 @@ const App: React.FC = () => {
       });
       updateMessage(userId, { status: 'sent' });
       setMessages(prev => [...prev, { id: makeId(), role: 'model', text: res, ts: Date.now(), status: 'sent' }]);
+      playBeep(520, 0.07, 0.035);
     } catch {
       updateMessage(userId, { status: 'failed' });
       setMessages(prev => [...prev, { id: makeId(), role: 'model', text: "Лёха, сегодня я молчу. Но ты всё равно не прав.", ts: Date.now(), status: 'failed' }]);
+      playBeep(180, 0.1, 0.05);
     } finally {
       setRetrying(false);
       setLoading(false);
@@ -172,6 +259,12 @@ const App: React.FC = () => {
           <span className="chip bg-red-900/20 text-red-500 border border-red-500/50">ОПАСНОСТЬ ПОДЪЁБОВ 99%</span>
           <span className="chip bg-green-900/20 text-green-400 border border-green-500/30">ПИНГ 4MS</span>
           <span className="chip bg-white/5 text-white border border-white/20">РЕЖИМ: ROAST</span>
+          <button
+            onClick={() => setSoundOn(v => !v)}
+            className="chip bg-black/60 text-green-400 border border-green-500/30 hover:border-green-400"
+          >
+            {soundOn ? 'SOUND: ON' : 'SOUND: OFF'}
+          </button>
         </div>
       </header>
 
@@ -204,7 +297,20 @@ const App: React.FC = () => {
           {activeFeature === LekhaFeature.CHAT && (
             <div className="panel-enter flex flex-col h-full">
               <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 font-bold text-[13px] sm:text-sm">
-                <div className="text-green-900/50 text-[10px] uppercase mb-4 tracking-[0.35em]">--- Начало лога ---</div>
+                <div className="flex items-center justify-between text-green-900/50 text-[10px] uppercase mb-4 tracking-[0.35em]">
+                  <span>--- Начало лога ---</span>
+                  {messages.length > 0 && (
+                    <button
+                      onClick={clearHistory}
+                      className="ghost-btn"
+                      title="Очистить лог"
+                      aria-label="Очистить лог"
+                    >
+                      <ArrowPathIcon className="w-4 h-4" />
+                      СБРОС
+                    </button>
+                  )}
+                </div>
                 {retrying && (
                   <div className="text-[10px] uppercase tracking-[0.35em] text-green-400/80">
                     ПОВТОР ЗАПРОСА... ПОПЫТКА {retryCount}

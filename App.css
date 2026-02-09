@@ -97,6 +97,25 @@ body {
   text-transform: uppercase;
 }
 
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  color: rgba(0, 255, 65, 0.7);
+  background: transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+}
+
+.ghost-btn:hover {
+  border-color: rgba(0, 255, 65, 0.5);
+  color: rgba(0, 255, 65, 1);
+}
+
 .tab {
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.6);
