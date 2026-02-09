@@ -32,6 +32,14 @@ const App: React.FC = () => {
   const targetRef = useRef({ x: 0, y: 0 });
   const currentRef = useRef({ x: 0, y: 0 });
 
+  const makeId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}_${Math.random().toString(16).slice(2)}`);
+  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const updateMessage = (id: string, patch: Partial<Message>) => {
+    setMessages(prev => prev.map(m => (m.id === id ? { ...m, ...patch } : m)));
+  };
+
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -71,11 +79,12 @@ const App: React.FC = () => {
     e.preventDefault();
     if (!input.trim() || loading) return;
     if (cooldownUntil && Date.now() < cooldownUntil) {
-      setMessages(prev => [...prev, { role: 'model', text: "Тише, Лёха. Не спамь — дай 2 сек перед новым запросом." }]);
+      setMessages(prev => [...prev, { id: makeId(), role: 'model', text: "Тише, Лёха. Не спамь — дай 2 сек перед новым запросом.", ts: Date.now(), status: 'sent' }]);
       return;
     }
 
-    const userMsg: Message = { role: 'user', text: input };
+    const userId = makeId();
+    const userMsg: Message = { id: userId, role: 'user', text: input, ts: Date.now(), status: 'sending' };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
@@ -90,9 +99,11 @@ const App: React.FC = () => {
           setRetryCount(attempt);
         }
       });
-      setMessages(prev => [...prev, { role: 'model', text: res }]);
+      updateMessage(userId, { status: 'sent' });
+      setMessages(prev => [...prev, { id: makeId(), role: 'model', text: res, ts: Date.now(), status: 'sent' }]);
     } catch {
-      setMessages(prev => [...prev, { role: 'model', text: "Лёха, сегодня я молчу. Но ты всё равно не прав." }]);
+      updateMessage(userId, { status: 'failed' });
+      setMessages(prev => [...prev, { id: makeId(), role: 'model', text: "Лёха, сегодня я молчу. Но ты всё равно не прав.", ts: Date.now(), status: 'failed' }]);
     } finally {
       setRetrying(false);
       setLoading(false);
@@ -202,11 +213,21 @@ const App: React.FC = () => {
                 {messages.length === 0 && (
                   <div className="text-green-500/40 italic">Лёха, ну чё ты молчишь как на допросе? Спроси чё-нить.</div>
                 )}
-                {messages.map((m, i) => (
-                  <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {messages.map((m) => (
+                  <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] p-3 md:p-4 border rounded-lg ${m.role === 'user' ? 'border-green-500 text-green-500 bg-black/50' : 'border-white/60 text-white bg-green-900/10'}`}>
-                      <span className="text-[10px] block opacity-50 mb-1">{m.role === 'user' ? 'ЛЕХА' : 'ТЕРМИНАЛ'}</span>
-                      {m.text}
+                      <div className="flex items-center justify-between gap-3 text-[10px] opacity-60 mb-1">
+                        <span className="uppercase">{m.role === 'user' ? 'ЛЕХА' : 'ТЕРМИНАЛ'}</span>
+                        <span>{formatTime(m.ts)}</span>
+                      </div>
+                      <div>{m.text}</div>
+                      {m.role === 'user' && (
+                        <div className="mt-2 text-[10px] uppercase tracking-[0.25em] opacity-50">
+                          {m.status === 'sending' && 'ОТПРАВКА'}
+                          {m.status === 'sent' && 'ДОСТАВЛЕНО'}
+                          {m.status === 'failed' && 'СБОЙ'}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
