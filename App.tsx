@@ -40,12 +40,25 @@ const App: React.FC = () => {
       return true;
     }
   });
+  const [soundProOn, setSoundProOn] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      return parsed?.soundProOn ?? false;
+    } catch {
+      return false;
+    }
+  });
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const targetRef = useRef({ x: 0, y: 0 });
   const currentRef = useRef({ x: 0, y: 0 });
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const ambientRef = useRef<{ osc: OscillatorNode; gain: GainNode } | null>(null);
+  const lastClickRef = useRef(0);
 
   const makeId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
@@ -74,6 +87,14 @@ const App: React.FC = () => {
     const now = ctx.currentTime;
     osc.start(now);
     osc.stop(now + duration);
+  };
+
+  const playClick = () => {
+    if (!soundOn || !soundProOn) return;
+    const now = Date.now();
+    if (now - lastClickRef.current < 45) return;
+    lastClickRef.current = now;
+    playBeep(1200, 0.02, 0.015);
   };
 
   const clearHistory = () => {
@@ -122,11 +143,50 @@ const App: React.FC = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ soundOn }));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ soundOn, soundProOn }));
     } catch {
       // ignore quota errors
     }
-  }, [soundOn]);
+  }, [soundOn, soundProOn]);
+
+  useEffect(() => {
+    if (!soundOn || !soundProOn) {
+      if (ambientRef.current) {
+        ambientRef.current.osc.stop();
+        ambientRef.current.osc.disconnect();
+        ambientRef.current.gain.disconnect();
+        ambientRef.current = null;
+      }
+      return;
+    }
+
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioCtx();
+    }
+    const ctx = audioCtxRef.current;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 58;
+    gain.gain.value = 0.015;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    ambientRef.current = { osc, gain };
+
+    return () => {
+      if (ambientRef.current) {
+        ambientRef.current.osc.stop();
+        ambientRef.current.osc.disconnect();
+        ambientRef.current.gain.disconnect();
+        ambientRef.current = null;
+      }
+    };
+  }, [soundOn, soundProOn]);
 
   useEffect(() => {
     const update = () => {
@@ -265,6 +325,12 @@ const App: React.FC = () => {
           >
             {soundOn ? 'SOUND: ON' : 'SOUND: OFF'}
           </button>
+          <button
+            onClick={() => setSoundProOn(v => !v)}
+            className="chip bg-black/60 text-green-400 border border-green-500/30 hover:border-green-400"
+          >
+            {soundProOn ? 'SOUND PRO: ON' : 'SOUND PRO: OFF'}
+          </button>
         </div>
       </header>
 
@@ -344,6 +410,7 @@ const App: React.FC = () => {
                 <input 
                   value={input}
                   onChange={e => setInput(e.target.value)}
+                  onKeyDown={playClick}
                   placeholder="Введи оправдание..."
                   className="flex-1 bg-black/80 border border-green-900/50 px-4 py-3 text-green-500 focus:outline-none focus:border-green-500 rounded-md min-h-[48px]"
                 />
