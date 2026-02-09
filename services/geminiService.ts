@@ -14,7 +14,7 @@ class GeminiError extends Error {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function withRetry<T>(fn: () => Promise<T>, attempts = 3) {
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3, onRetry?: (attempt: number) => void) {
   let lastErr: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
@@ -23,6 +23,7 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 3) {
       lastErr = err;
       const isLast = i === attempts - 1;
       if (isLast) break;
+      onRetry?.(i + 1);
       await sleep(300 * (i + 1));
     }
   }
@@ -46,7 +47,7 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const geminiService = {
-  async chat(message: string) {
+  async chat(message: string, opts?: { onRetry?: (attempt: number) => void }) {
     try {
       ensureApiKey();
       const ai = getAI();
@@ -54,7 +55,7 @@ export const geminiService = {
         model: 'gemini-3-flash-preview',
         config: { systemInstruction: SYSTEM_INSTRUCTION },
       });
-      const response = await withRetry(() => chat.sendMessage({ message }), 2);
+      const response = await withRetry(() => chat.sendMessage({ message }), 2, opts?.onRetry);
       return response.text;
     } catch (err) {
       if (err instanceof GeminiError) throw err;
@@ -62,7 +63,7 @@ export const geminiService = {
     }
   },
 
-  async analyzeStyle(imageData: string): Promise<string> {
+  async analyzeStyle(imageData: string, opts?: { onRetry?: (attempt: number) => void }): Promise<string> {
     try {
       ensureApiKey();
       const ai = getAI();
@@ -75,14 +76,14 @@ export const geminiService = {
           ]
         },
         config: { systemInstruction: SYSTEM_INSTRUCTION }
-      }), 2);
+      }), 2, opts?.onRetry);
       return response.text || "Даже сканер завис от такой нечёткости, Лёх.";
     } catch {
       return "Сканер отвалился. Лёха опять что-то сломал.";
     }
   },
 
-  async generateCrazyLekha(prompt: string): Promise<string | null> {
+  async generateCrazyLekha(prompt: string, opts?: { onRetry?: (attempt: number) => void }): Promise<string | null> {
     try {
       ensureApiKey();
       const ai = getAI();
@@ -91,7 +92,7 @@ export const geminiService = {
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: fullPrompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
-      }), 2);
+      }), 2, opts?.onRetry);
 
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData) {
@@ -104,7 +105,7 @@ export const geminiService = {
     }
   },
 
-  async getLekhaQuote(): Promise<string> {
+  async getLekhaQuote(opts?: { onRetry?: (attempt: number) => void }): Promise<string> {
     try {
       ensureApiKey();
       const ai = getAI();
@@ -112,7 +113,7 @@ export const geminiService = {
         model: 'gemini-3-flash-preview',
         contents: "Придумай одну смешную пацанскую цитату специально для Лёхи, которая его подкалывает.",
         config: { systemInstruction: SYSTEM_INSTRUCTION }
-      }), 2);
+      }), 2, opts?.onRetry);
       return response.text || "Лёха, ты где?";
     } catch {
       return "Цитатник умер. Лёха, походу без вдохновения.";

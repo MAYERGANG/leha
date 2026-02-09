@@ -23,6 +23,9 @@ const App: React.FC = () => {
   const [genImg, setGenImg] = useState<string | null>(null);
   const [genPrompt, setGenPrompt] = useState('Лёха в балетной пачке');
   const [wisdom, setWisdom] = useState<string>("Нажми кнопку и узнай правду о себе, Лёх.");
+  const [retrying, setRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -67,14 +70,26 @@ const App: React.FC = () => {
   const sendChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
+    if (cooldownUntil && Date.now() < cooldownUntil) {
+      setMessages(prev => [...prev, { role: 'model', text: "Тише, Лёха. Не спамь — дай 2 сек перед новым запросом." }]);
+      return;
+    }
 
     const userMsg: Message = { role: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
+    setRetrying(false);
+    setRetryCount(0);
+    setCooldownUntil(Date.now() + 2000);
 
     try {
-      const res = await geminiService.chat(input);
+      const res = await geminiService.chat(input, {
+        onRetry: (attempt) => {
+          setRetrying(true);
+          setRetryCount(attempt);
+        }
+      });
       setMessages(prev => [...prev, { role: 'model', text: res }]);
     } catch (err: any) {
       const code = err?.code;
@@ -84,6 +99,7 @@ const App: React.FC = () => {
         setMessages(prev => [...prev, { role: 'model', text: "Сеть барахлит или API отвалилось. Попробуй ещё раз чуть позже." }]);
       }
     } finally {
+      setRetrying(false);
       setLoading(false);
     }
   };
@@ -183,6 +199,11 @@ const App: React.FC = () => {
             <div className="panel-enter flex flex-col h-full">
               <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 font-bold text-[13px] sm:text-sm">
                 <div className="text-green-900/50 text-[10px] uppercase mb-4 tracking-[0.35em]">--- Начало лога ---</div>
+                {retrying && (
+                  <div className="text-[10px] uppercase tracking-[0.35em] text-green-400/80">
+                    ПОВТОР ЗАПРОСА... ПОПЫТКА {retryCount}
+                  </div>
+                )}
                 {messages.length === 0 && (
                   <div className="text-green-500/40 italic">Лёха, ну чё ты молчишь как на допросе? Спроси чё-нить.</div>
                 )}
