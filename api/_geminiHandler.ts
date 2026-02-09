@@ -47,7 +47,7 @@ export async function handleGemini(req: IncomingMessage, res: ServerResponse) {
   let data: any;
   try {
     data = await readJson(req);
-  } catch (err) {
+  } catch {
     return send(res, 400, { ok: false, error: 'BAD_JSON' });
   }
 

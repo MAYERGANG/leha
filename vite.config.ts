@@ -1,7 +1,7 @@
 import path from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { handleGemini } from './server/geminiHandler';
+import { handleGemini } from './api/_geminiHandler';
 
 export default defineConfig(() => ({
   server: {
