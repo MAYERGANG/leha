@@ -1,7 +1,39 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-const getAI = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const getAI = () => new GoogleGenAI({ apiKey: API_KEY });
+
+class GeminiError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3) {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const isLast = i === attempts - 1;
+      if (isLast) break;
+      await sleep(300 * (i + 1));
+    }
+  }
+  throw lastErr;
+}
+
+function ensureApiKey() {
+  if (!API_KEY) {
+    throw new GeminiError('API_KEY_MISSING', 'Missing API key');
+  }
+}
 
 const SYSTEM_INSTRUCTION = `
 Ты - "Токсичный Лёха-Бот". Твоя задача - подкалывать (подъёбывать) пользователя, которого зовут Лёха.
@@ -15,19 +47,26 @@ const SYSTEM_INSTRUCTION = `
 
 export const geminiService = {
   async chat(message: string) {
-    const ai = getAI();
-    const chat = ai.chats.create({
-      model: 'gemini-3-flash-preview',
-      config: { systemInstruction: SYSTEM_INSTRUCTION },
-    });
-    const response = await chat.sendMessage({ message });
-    return response.text;
+    try {
+      ensureApiKey();
+      const ai = getAI();
+      const chat = ai.chats.create({
+        model: 'gemini-3-flash-preview',
+        config: { systemInstruction: SYSTEM_INSTRUCTION },
+      });
+      const response = await withRetry(() => chat.sendMessage({ message }), 2);
+      return response.text;
+    } catch (err) {
+      if (err instanceof GeminiError) throw err;
+      throw new GeminiError('NETWORK_OR_API', 'Network or API error');
+    }
   },
 
   async analyzeStyle(imageData: string): Promise<string> {
     try {
+      ensureApiKey();
       const ai = getAI();
-      const response = await ai.models.generateContent({
+      const response = await withRetry(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: {
           parts: [
@@ -36,7 +75,7 @@ export const geminiService = {
           ]
         },
         config: { systemInstruction: SYSTEM_INSTRUCTION }
-      });
+      }), 2);
       return response.text || "Даже сканер завис от такой нечёткости, Лёх.";
     } catch {
       return "Сканер отвалился. Лёха опять что-то сломал.";
@@ -44,15 +83,15 @@ export const geminiService = {
   },
 
   async generateCrazyLekha(prompt: string): Promise<string | null> {
-    const ai = getAI();
-    const fullPrompt = `Абсурдная, карикатурная фотография русского парня по имени Лёха, который находится в максимально нелепой ситуации: ${prompt}. Стиль: гиперреализм, но с юмором, яркие цвета, пацанская эстетика.`;
-    
     try {
-      const response = await ai.models.generateContent({
+      ensureApiKey();
+      const ai = getAI();
+      const fullPrompt = `Абсурдная, карикатурная фотография русского парня по имени Лёха, который находится в максимально нелепой ситуации: ${prompt}. Стиль: гиперреализм, но с юмором, яркие цвета, пацанская эстетика.`;
+      const response = await withRetry(() => ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: fullPrompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
-      });
+      }), 2);
 
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData) {
@@ -67,12 +106,13 @@ export const geminiService = {
 
   async getLekhaQuote(): Promise<string> {
     try {
+      ensureApiKey();
       const ai = getAI();
-      const response = await ai.models.generateContent({
+      const response = await withRetry(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Придумай одну смешную пацанскую цитату специально для Лёхи, которая его подкалывает.",
         config: { systemInstruction: SYSTEM_INSTRUCTION }
-      });
+      }), 2);
       return response.text || "Лёха, ты где?";
     } catch {
       return "Цитатник умер. Лёха, походу без вдохновения.";
