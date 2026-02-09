@@ -61,6 +61,37 @@ body {
   pointer-events: none;
 }
 
+.bg-halo {
+  position: fixed;
+  inset: -20%;
+  background:
+    conic-gradient(from 90deg at 50% 50%,
+      rgba(0, 255, 154, 0.18),
+      rgba(0, 255, 213, 0.12),
+      rgba(182, 255, 75, 0.10),
+      rgba(0, 255, 154, 0.18));
+  filter: blur(40px) saturate(1.4);
+  opacity: 0.35;
+  z-index: -6;
+  pointer-events: none;
+  mask-image: radial-gradient(circle at 50% 50%, black 35%, transparent 70%);
+  animation: haloSpin 60s linear infinite;
+}
+
+.bg-fog {
+  position: fixed;
+  inset: -10%;
+  background:
+    radial-gradient(40% 40% at 20% 30%, rgba(0, 255, 154, 0.12), transparent 70%),
+    radial-gradient(45% 45% at 80% 25%, rgba(0, 255, 213, 0.10), transparent 70%),
+    radial-gradient(50% 50% at 60% 80%, rgba(182, 255, 75, 0.10), transparent 72%);
+  filter: blur(50px) saturate(1.2);
+  opacity: 0.5;
+  z-index: -5;
+  pointer-events: none;
+  animation: fogDrift 26s ease-in-out infinite;
+}
+
 .bg-orb {
   position: fixed;
   border-radius: 999px;
@@ -99,6 +130,21 @@ body {
   background: radial-gradient(circle at 50% 50%, rgba(182, 255, 75, 0.30), transparent 64%);
   animation: driftC 32s ease-in-out infinite;
   transform: translate(calc(var(--orb-x) * 0.01), calc(var(--orb-y) * -0.018));
+}
+
+.bg-stars {
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, rgba(0, 255, 154, 0.25), transparent 60%),
+    radial-gradient(1px 1px at 120px 80px, rgba(0, 255, 213, 0.22), transparent 60%),
+    radial-gradient(1px 1px at 60px 140px, rgba(182, 255, 75, 0.2), transparent 60%),
+    radial-gradient(1px 1px at 180px 200px, rgba(0, 255, 154, 0.2), transparent 60%);
+  background-size: 220px 220px;
+  opacity: 0.35;
+  z-index: -4;
+  pointer-events: none;
+  animation: starDrift 90s linear infinite;
 }
 
 .bg-mesh {
@@ -319,6 +365,9 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .bg-orb,
+  .bg-halo,
+  .bg-fog,
+  .bg-stars,
   .bg-mesh,
   .scanlines,
   .panel-enter,
@@ -446,6 +495,21 @@ body {
 @keyframes meshFloat {
   0%, 100% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(2vw, -2vh) scale(1.02); }
+}
+
+@keyframes haloSpin {
+  0% { transform: rotate(0deg) scale(1.02); }
+  100% { transform: rotate(360deg) scale(1.02); }
+}
+
+@keyframes fogDrift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-2vw, 1.5vh); }
+}
+
+@keyframes starDrift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-10vw, 6vh); }
 }
 
 @media (max-width: 640px) {
