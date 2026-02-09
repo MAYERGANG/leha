@@ -62,7 +62,7 @@ export async function handleGemini(req: IncomingMessage, res: ServerResponse) {
     if (action === 'chat') {
       const message = String(payload?.message || '');
       const chat = ai.chats.create({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash-lite',
         config: { systemInstruction: SYSTEM_INSTRUCTION },
       });
       const response = await chat.sendMessage({ message });
@@ -72,7 +72,7 @@ export async function handleGemini(req: IncomingMessage, res: ServerResponse) {
     if (action === 'analyze') {
       const imageData = String(payload?.imageData || '');
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash-lite',
         contents: {
           parts: [
             { inlineData: { data: imageData, mimeType: 'image/jpeg' } },
@@ -105,7 +105,7 @@ export async function handleGemini(req: IncomingMessage, res: ServerResponse) {
 
     if (action === 'quote') {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash-lite',
         contents: "Придумай одну смешную пацанскую цитату специально для Лёхи, которая его подкалывает.",
         config: { systemInstruction: SYSTEM_INSTRUCTION }
       });
