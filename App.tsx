@@ -330,6 +330,9 @@ const App: React.FC = () => {
       <div className="bg-fog" />
       <div className="bg-aurora-flow" />
       <div className="bg-leaks" />
+      <div className="bg-datarain" />
+      <div className="bg-circuit" />
+      <div className="bg-particles" />
       <div className="bg-orb bg-orb-a" />
       <div className="bg-orb bg-orb-b" />
       <div className="bg-orb bg-orb-c" />
