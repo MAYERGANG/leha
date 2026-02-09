@@ -328,11 +328,14 @@ const App: React.FC = () => {
     <div className="app-shell min-h-screen flex flex-col px-4 pt-6 pb-10 md:px-8 md:pt-10 max-w-6xl mx-auto">
       <div className="bg-halo" />
       <div className="bg-fog" />
+      <div className="bg-aurora-flow" />
+      <div className="bg-leaks" />
       <div className="bg-orb bg-orb-a" />
       <div className="bg-orb bg-orb-b" />
       <div className="bg-orb bg-orb-c" />
       <div className="bg-stars" />
       <div className="bg-mesh" />
+      <div className="bg-sheen" />
       <div className="bg-noise" />
       <div className="bg-grid" />
       <div className="scanlines" />
