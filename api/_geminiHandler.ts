@@ -12,6 +12,31 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 const MAX_BODY = 5 * 1024 * 1024;
+const UPSTREAM_TIMEOUT_MS = 15000;
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function withTimeout<T>(promise: Promise<T>, ms: number) {
+  let t: NodeJS.Timeout;
+  const timeout = new Promise<never>((_, reject) => {
+    t = setTimeout(() => reject(new Error('UPSTREAM_TIMEOUT')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(t!));
+}
+
+async function withRetry<T>(fn: () => Promise<T>, attempts = 2) {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (i === attempts - 1) break;
+      await sleep(250 * (i + 1));
+    }
+  }
+  throw lastErr;
+}
 
 async function readJson(req: IncomingMessage): Promise<any> {
   const chunks: Buffer[] = [];
@@ -47,7 +72,10 @@ export async function handleGemini(req: IncomingMessage, res: ServerResponse) {
   let data: any;
   try {
     data = await readJson(req);
-  } catch {
+  } catch (err: any) {
+    if (String(err?.message).includes('PAYLOAD_TOO_LARGE')) {
+      return send(res, 413, { ok: false, error: 'PAYLOAD_TOO_LARGE' });
+    }
     return send(res, 400, { ok: false, error: 'BAD_JSON' });
   }
 
@@ -65,13 +93,13 @@ export async function handleGemini(req: IncomingMessage, res: ServerResponse) {
         model: 'gemini-2.5-flash-lite',
         config: { systemInstruction: SYSTEM_INSTRUCTION },
       });
-      const response = await chat.sendMessage({ message });
+      const response = await withRetry(() => withTimeout(chat.sendMessage({ message }), UPSTREAM_TIMEOUT_MS), 2);
       return send(res, 200, { ok: true, data: { text: response.text || '' } });
     }
 
     if (action === 'analyze') {
       const imageData = String(payload?.imageData || '');
-      const response = await ai.models.generateContent({
+      const response = await withRetry(() => withTimeout(ai.models.generateContent({
         model: 'gemini-2.5-flash-lite',
         contents: {
           parts: [
@@ -80,18 +108,18 @@ export async function handleGemini(req: IncomingMessage, res: ServerResponse) {
           ]
         },
         config: { systemInstruction: SYSTEM_INSTRUCTION }
-      });
+      }), UPSTREAM_TIMEOUT_MS), 2);
       return send(res, 200, { ok: true, data: { text: response.text || '' } });
     }
 
     if (action === 'image') {
       const prompt = String(payload?.prompt || '');
       const fullPrompt = `Абсурдная, карикатурная фотография русского парня по имени Лёха, который находится в максимально нелепой ситуации: ${prompt}. Стиль: гиперреализм, но с юмором, яркие цвета, пацанская эстетика.`;
-      const response = await ai.models.generateContent({
+      const response = await withRetry(() => withTimeout(ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts: [{ text: fullPrompt }] },
         config: { imageConfig: { aspectRatio: "1:1" } }
-      });
+      }), UPSTREAM_TIMEOUT_MS), 2);
 
       let dataUrl: string | null = null;
       for (const part of response.candidates[0].content.parts) {
@@ -104,16 +132,21 @@ export async function handleGemini(req: IncomingMessage, res: ServerResponse) {
     }
 
     if (action === 'quote') {
-      const response = await ai.models.generateContent({
+      const response = await withRetry(() => withTimeout(ai.models.generateContent({
         model: 'gemini-2.5-flash-lite',
         contents: "Придумай одну смешную пацанскую цитату специально для Лёхи, которая его подкалывает.",
         config: { systemInstruction: SYSTEM_INSTRUCTION }
-      });
+      }), UPSTREAM_TIMEOUT_MS), 2);
       return send(res, 200, { ok: true, data: { text: response.text || '' } });
     }
 
     return send(res, 400, { ok: false, error: 'UNKNOWN_ACTION' });
-  } catch {
+  } catch (err: any) {
+    const msg = String(err?.message || '');
+    console.error('Gemini handler error:', msg);
+    if (msg.includes('UPSTREAM_TIMEOUT')) {
+      return send(res, 504, { ok: false, error: 'UPSTREAM_TIMEOUT' });
+    }
     return send(res, 500, { ok: false, error: 'SERVER_ERROR' });
   }
 }

@@ -261,7 +261,34 @@ const App: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       const r = new FileReader();
-      r.onload = () => { setPreviewImage(r.result as string); setAnalysis(null); };
+      r.onload = () => {
+        const src = r.result as string;
+        const img = new Image();
+        img.onload = () => {
+          const maxSize = 768;
+          const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            setPreviewImage(src);
+            setAnalysis(null);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          setPreviewImage(compressed);
+          setAnalysis(null);
+        };
+        img.onerror = () => {
+          setPreviewImage(src);
+          setAnalysis(null);
+        };
+        img.src = src;
+      };
       r.readAsDataURL(file);
     }
   };

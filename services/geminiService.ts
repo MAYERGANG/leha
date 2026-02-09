@@ -28,17 +28,18 @@ const fallbackChat = () => fallbackChats[Math.floor(Math.random() * fallbackChat
 
 async function postGemini<T>(action: string, payload: any, onRetry?: (attempt: number) => void): Promise<T> {
   return withRetry(async () => {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 12000);
     const res = await fetch('/api/gemini', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, payload })
-    });
-    if (!res.ok) {
-      throw new Error('API_ERROR');
-    }
-    const json = await res.json();
-    if (!json?.ok) {
-      throw new Error('API_ERROR');
+      body: JSON.stringify({ action, payload }),
+      signal: controller.signal
+    }).finally(() => clearTimeout(t));
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.ok) {
+      const code = json?.error || `HTTP_${res.status}`;
+      throw new Error(code);
     }
     return json.data as T;
   }, 2, onRetry);
